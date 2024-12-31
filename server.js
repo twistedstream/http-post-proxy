@@ -23,30 +23,44 @@ app.use(
   logger(`[:date[iso]] ":method :url" :status - :req[content-length] bytes`)
 );
 
-// endpoints
+// helpers
 
-app.post(/(.*)/, json(), async (req, res) => {
-  //log request contents
-  const { headers, body } = req;
+function logHeaders(headers) {
   for (const key in headers) {
     console.log(`${key}: \x1b[32m%s\x1b[0m`, headers[key]);
   }
+}
+
+function logBody(body) {
+  console.log(
+    util.inspect(body, {
+      showHidden: false,
+      compact: false,
+      depth: null,
+      colors: true,
+    })
+  );
+}
+
+// endpoints
+
+app.post(/(.*)/, json(), async (req, res) => {
+  const { headers, body } = req;
+
+  //log request contents
+  console.log("REQUEST:\n");
+  logHeaders(headers);
   // console.log("Headers:", formatContent(headers));
   if (body) {
-    console.log(
-      util.inspect(body, {
-        showHidden: false,
-        compact: false,
-        depth: null,
-        colors: true,
-      })
-    );
+    logBody(body);
   } else {
-    console.log("\x1b[33m%s\x1b[0m", "WARNING: No JSON body sent");
+    console.log("\x1b[33m%s\x1b[0m", "(no JSON body sent)");
   }
 
-  // generate new url and headers
+  // generate new url
   const newUrl = `${BACKING_SERVICE_BASE_URL}${req.originalUrl}`;
+
+  // prepare request headers, removing ones that shouldn't be proxied
   const modifiedHeaders = { ...headers };
   delete modifiedHeaders.host;
   delete modifiedHeaders["content-length"];
@@ -58,9 +72,25 @@ app.post(/(.*)/, json(), async (req, res) => {
     headers: modifiedHeaders,
   });
 
-  // parse response
+  // parse response headers, removing ones that shouldn't be proxied
   const responseHeaders = Object.fromEntries(response.headers);
+  delete responseHeaders["content-encoding"];
+
+  // parse response body
   const responseBody = await response.text();
+
+  // log response
+  console.log("\nRESPONSE:\n");
+  logHeaders(responseHeaders);
+  if (responseBody) {
+    try {
+      logBody(JSON.parse(responseBody));
+    } catch (_err) {
+      console.log(responseBody);
+    }
+  } else {
+    console.log("\x1b[33m%s\x1b[0m", "(no JSON body received)");
+  }
 
   // respond
   res.set(responseHeaders);
