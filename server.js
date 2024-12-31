@@ -99,6 +99,6 @@ const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
   console.log(
-    `${package.description} (v${package.version}), listening on port ${port}, proxying to: ${BACKING_SERVICE_BASE_URL}`
+    `${package.description} (v${package.version}), listening on port ${port}, proxying to: ${BACKING_SERVICE_BASE_URL}, with verb: ${PROXY_VERB}`
   );
 });
