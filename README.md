@@ -22,7 +22,7 @@ When they occur, they are logged to the console in color:
 And, based on configuration, the following `PUT` request is sent to the backing service
 
 ```http
-PUT BACKING_SERVICE_BASE_PATH/tasks/1234 HTTP/1.1
+PUT /BACKING_SERVICE_BASE_PATH/tasks/1234 HTTP/1.1
 Host: BACKING_SERVICE_HOST_NAME
 Content-Type: application/json
 Authorization: Bearer my-api-key
